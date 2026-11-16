@@ -111,7 +111,7 @@
             return new Promise(res => {
                 const r = new FileReader();
                 r.onload = () => res(r.result.split(',')[1]);
-                reader.readAsDataURL(file);
+                r.readAsDataURL(file);
             });
         }
 
@@ -177,42 +177,45 @@
             await fetch(`https://github.com{KULLANICI}/${DEPO}/contents/${yol}`, {
                 method: "DELETE",
                 headers: { "Authorization": `token ${token}`, "Content-Type": "application/json" },
-body: JSON.stringify({ message: "Yazı silindi", sha: sha })
-});
-yazilariListele();
-}
-async function icerigeResimYukle() {
-const file = document.getElementById("icerikResimDosya").files[0];
-const token = document.getElementById("token").value.trim();
-if (!file || !token) return alert("Önce Token girmelisin!");
-document.getElementById("durum").innerText = "⏳ Fotoğraf yükleniyor...";
-try {
-const dosyaAdi = images/${Date.now()}-${file.name.replace(/\s+/g, '-')};
-const b64 = await dosyaBase64(file);
-await githubIslem(dosyaAdi, b64, "Görsel eklendi", token);
-document.getElementById("icerik").value += \n\n![Görsel](https://githubusercontent.com{KULLANICI}/${DEPO}/main/${dosyaAdi})\n\n;
-document.getElementById("durum").innerText = "✅ Fotoğraf metne eklendi!";
-} catch (e) { document.getElementById("durum").innerText = "❌ Hata: " + e.message; }
-}
-async function yayinla() {
-const token = document.getElementById("token").value.trim();
-const baslik = document.getElementById("baslik").value.trim();
-const kategori = document.getElementById("kategori").value;
-const ozet = document.getElementById("ozet").value.trim();
-const icerik = document.getElementById("icerik").value;
-const kapakFile = document.getElementById("kapakDosya").files[0];
-if (!token || !baslik || !icerik) return alert("Anahtar, başlık ve içerik zorunludur!");
-localStorage.setItem("blog_token", token);
-document.getElementById("durum").innerText = "⏳ Yayınlanıyor...";
-try {
-let kapakUrl = "";
-if (kapakFile) {
-const kapakAdi = images/${Date.now()}-${kapakFile.name.replace(/\s+/g, '-')};
-await githubIslem(kapakAdi, await dosyaBase64(kapakFile), "Kapak görseli", token);
-kapakUrl = https://githubusercontent.com{KULLANICI}/${DEPO}/main/${kapakAdi};
-}
-const jsonB64 = btoa(unescape(encodeURIComponent(JSON.stringify({ baslik, kategori, resim: kapakUrl, ozet, icerik }, null, 2))));
-await githubIslem(_posts/${Date.now()}.json, jsonB64, Yeni yazı: ${baslik}, token);
-document.getElementById("durum").innerText = "🎉 Yazın yayınlandı!";
-} catch (e) { document.getElementById("durum").innerText = "❌ Hata: " + e.message; }
-}
+                body: JSON.stringify({ message: "Yazı silindi", sha: sha })
+            });
+            yazilariListele();
+        }
+
+        async function icerigeResimYukle() {
+            const file = document.getElementById("icerikResimDosya").files[0];
+            const token = document.getElementById("token").value.trim();
+            if (!file || !token) return alert("Önce Token girmelisin!");
+            document.getElementById("durum").innerText = "⏳ Fotoğraf yükleniyor...";
+            try {
+                const dosyaAdi = `images/${Date.now()}-${file.name.replace(/\s+/g, '-')}`;
+                const b64 = await dosyaBase64(file);
+                await githubIslem(dosyaAdi, b64, "Görsel eklendi", token);
+                document.getElementById("icerik").value += `\n\n![Görsel](https://githubusercontent.com{KULLANICI}/${DEPO}/main/${dosyaAdi})\n\n`;
+                document.getElementById("durum").innerText = "✅ Fotoğraf metne eklendi!";
+            } catch (e) { document.getElementById("durum").innerText = "❌ Hata: " + e.message; }
+        }
+
+        async function yayinla() {
+            const token = document.getElementById("token").value.trim();
+            const baslik = document.getElementById("baslik").value.trim();
+            const kategori = document.getElementById("kategori").value;
+            const ozet = document.getElementById("ozet").value.trim();
+            const icerik = document.getElementById("icerik").value;
+            const kapakFile = document.getElementById("kapakDosya").files[0];
+            if (!token || !baslik || !icerik) return alert("Anahtar, başlık ve içerik zorunludur!");
+            localStorage.setItem("blog_token", token);
+            document.getElementById("durum").innerText = "⏳ Yayınlanıyor...";
+            try {
+                let kapakUrl = "";
+                if (kapakFile) {
+                    const kapakAdi = `images/${Date.now()}-${kapakFile.name.replace(/\s+/g, '-')}`;
+                    await githubIslem(kapakAdi, await dosyaBase64(kapakFile), "Kapak görseli", token);
+                    kapakUrl = `https://githubusercontent.com{KULLANICI}/${DEPO}/main/${kapakAdi}`;
+                }
+                const jsonB64 = btoa(unescape(encodeURIComponent(JSON.stringify({ baslik, kategori, resim: kapakUrl, ozet, icerik }, null, 2))));
+                await githubIslem(`_posts/${Date.now()}.json`, jsonB64, `Yeni yazı: ${baslik}`, token);
+                document.getElementById("durum").innerText = "🎉 Yazın yayınlandı!";
+            } catch (e) { document.getElementById("durum").innerText = "❌ Hata: " + e.message; }
+        }
+    </script>
