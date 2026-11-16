@@ -3,17 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lingbit | Dil, Yaşam ve Sanat Sepet</title>
+    <title>Lingbit | Dil, Yaşam ve Motivasyon</title>
     <link href="https://googleapis.com" rel="stylesheet">
     <script src="https://jsdelivr.net"></script>
     <style>
-        :root {
-            --bg-color: #FDF8F5;
-            --card-bg: #FFFFFF;
-            --primary: #F4C2C2;
-            --text-dark: #4A4A4A;
-            --text-light: #7A7A7A;
-        }
+        :root { --bg-color: #FDF8F5; --card-bg: #FFFFFF; --primary: #F4C2C2; --text-dark: #4A4A4A; --text-light: #7A7A7A; }
         body { font-family: 'Quicksand', sans-serif; background-color: var(--bg-color); color: var(--text-dark); margin: 0; padding: 0; line-height: 1.6; }
         header { background-color: var(--card-bg); padding: 30px 20px; text-align: center; border-bottom: 2px solid var(--primary); }
         header h1 { margin: 0; font-size: 2.5rem; letter-spacing: 2px; }
@@ -45,16 +39,16 @@
 <body>
     <header>
         <h1 id="ana-baslik">✨ Lingbit</h1>
-        <p id="alt-baslik">Korece • Japonca • İngilizce • Gündelik Yaşam & Sanat Sepet</p>
-        <div id="hakkimda-alani">Merhaba! Dil öğrenme yolculuğumu ve gündelik yaşama dair notlarımı burada paylaşıyorum.</div>
+        <p id="alt-baslik">Korece • Japonca • İngilizce • Lifestyle & Motivasyon</p>
+        <div id="hakkimda-alani">Merhaba! Dil öğrenme yolculuğumu ve günlük motivasyon notlarımı burada paylaşıyorum.</div>
     </header>
     <nav>
         <button class="active" onclick="filtrele('hepsi', this)">Tümü</button>
-        <button onclick="filtrele('Korece', this)">🇰🇷 Korece</button>
-        <button onclick="filtrele('Japonca', this)">🇯🇵 Japonca</button>
-        <button onclick="filtrele('İngilizce', this)">🇬🇧 İngilizce</button>
-        <button onclick="filtrele('Gündelik Yaşam', this)">🌸 Lifestyle</button>
-        <button onclick="filtrele('Sanat Sepet', this)">✨ Motivasyon</button>
+        <button onclick="filtrele('korece', this)">🇰🇷 Korece</button>
+        <button onclick="filtrele('japonca', this)">🇯🇵 Japonca</button>
+        <button onclick="filtrele('ingilizce', this)">🇬🇧 İngilizce</button>
+        <button onclick="filtrele('lifestyle', this)">🌸 Lifestyle</button>
+        <button onclick="filtrele('motivasyon', this)">✨ Motivasyon</button>
     </nav>
     <main class="container" id="blog-alani"><p style="text-align:center;">Yazılar yükleniyor...</p></main>
     <div class="modal" id="okuma-penceresi" onclick="if(event.target.id==='okuma-penceresi') this.style.display='none'">
@@ -68,11 +62,9 @@
     </div>
     <footer>© 2026 Lingbit Blog • Sevgiyle tasarlandı 🌸</footer>
     <script>
-        const GITHUB_KULLANICI = "Lingbit";
-        const DEPO_ADI = "benim-blogum";
         let tumYazilar = [];
 
-        fetch(`https://githubusercontent.com{GITHUB_KULLANICI}/${DEPO_ADI}/main/ayarlar.json?t=${Date.now()}`)
+        fetch("https://githubusercontent.com" + Date.now())
             .then(r => r.json()).then(a => {
                 if(a.siteBaslik) document.getElementById("ana-baslik").innerText = a.siteBaslik;
                 if(a.altBaslik) document.getElementById("alt-baslik").innerText = a.altBaslik;
@@ -81,10 +73,10 @@
 
         async function yazilariYukle() {
             try {
-                const res = await fetch(`https://github.com{GITHUB_KULLANICI}/${DEPO_ADI}/contents/_posts?t=${Date.now()}`);
+                const res = await fetch("https://github.com" + Date.now());
                 const dosyalar = await res.json();
                 const icerikler = await Promise.all(dosyalar.filter(d => d.name.endsWith('.json')).map(async d => {
-                    const r = await fetch(d.download_url);
+                    const r = await fetch(d.download_url + "?t=" + Date.now());
                     return await r.json();
                 }));
                 tumYazilar = icerikler.reverse();
@@ -99,15 +91,10 @@
             alan.innerHTML = "";
             tumYazilar.forEach((y, idx) => {
                 if (kat === "hepsi" || y.kategori === kat) {
-                    alan.innerHTML += `
-                        <article class="post-card" onclick="yaziAc(${idx})">
-                            ${y.resim ? `<img src="${y.resim}" alt="${y.baslik}">` : ''}
-                            <div class="card-content">
-                                <span class="tag ${y.kategori}">${y.kategori}</span>
-                                <h2>${y.baslik}</h2>
-                                <p>${y.ozet}</p>
-                            </div>
-                        </article>`;
+                    alan.innerHTML += '<article class="post-card" onclick="yaziAc(' + idx + ')">' +
+                        (y.resim ? '<img src="' + y.resim + '" alt="' + y.baslik + '">' : '') +
+                        '<div class="card-content"><span class="tag ' + y.kategori + '">' + y.kategori + '</span>' +
+                        '<h2>' + y.baslik + '</h2><p>' + y.ozet + '</p></div></article>';
                 }
             });
         }
