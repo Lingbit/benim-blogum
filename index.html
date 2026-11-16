@@ -6,7 +6,6 @@
     <title>Lingbit | Dil, Yaşam ve Motivasyon</title>
     <link href="https://googleapis.com" rel="stylesheet">
     <script src="https://jsdelivr.net"></script>
-    </script>
     <style>
         :root {
             --bg-color: #FDF8F5;
@@ -19,6 +18,7 @@
         header { background-color: var(--card-bg); padding: 30px 20px; text-align: center; border-bottom: 2px solid var(--primary); }
         header h1 { margin: 0; font-size: 2.5rem; letter-spacing: 2px; }
         header p { color: var(--text-light); margin-top: 5px; }
+        #hakkimda-alani { max-width: 600px; margin: 12px auto 0; font-size: 0.92rem; color: #666; background: #FDF8F5; padding: 10px 18px; border-radius: 14px; }
         nav { display: flex; justify-content: center; gap: 12px; padding: 15px; background-color: #FFFDFB; flex-wrap: wrap; }
         nav button { background-color: var(--bg-color); border: 1px solid var(--primary); padding: 8px 18px; border-radius: 20px; font-family: 'Quicksand', sans-serif; font-weight: 600; color: var(--text-dark); cursor: pointer; transition: all 0.3s ease; }
         nav button:hover, nav button.active { background-color: var(--primary); color: #FFFFFF; }
@@ -44,8 +44,9 @@
 </head>
 <body>
     <header>
-        <h1>✨ Lingbit</h1>
-        <p>Korece • Japonca • İngilizce • Lifestyle & Motivasyon</p>
+        <h1 id="ana-baslik">✨ Lingbit</h1>
+        <p id="alt-baslik">Korece • Japonca • İngilizce • Lifestyle & Motivasyon</p>
+        <div id="hakkimda-alani">Merhaba! Dil öğrenme yolculuğumu ve günlük motivasyon notlarımı burada paylaşıyorum.</div>
     </header>
     <nav>
         <button class="active" onclick="filtrele('hepsi', this)">Tümü</button>
@@ -71,9 +72,16 @@
         const DEPO_ADI = "benim-blogum";
         let tumYazilar = [];
 
+        fetch(`https://githubusercontent.com{GITHUB_KULLANICI}/${DEPO_ADI}/main/ayarlar.json?t=${Date.now()}`)
+            .then(r => r.json()).then(a => {
+                if(a.siteBaslik) document.getElementById("ana-baslik").innerText = a.siteBaslik;
+                if(a.altBaslik) document.getElementById("alt-baslik").innerText = a.altBaslik;
+                if(a.hakkimda) document.getElementById("hakkimda-alani").innerText = a.hakkimda;
+            }).catch(()=>{});
+
         async function yazilariYukle() {
             try {
-                const res = await fetch(`https://github.com{Lingbit}/${DEPO_ADI}/contents/_posts`);
+                const res = await fetch(`https://github.com{GITHUB_KULLANICI}/${DEPO_ADI}/contents/_posts?t=${Date.now()}`);
                 const dosyalar = await res.json();
                 const icerikler = await Promise.all(dosyalar.filter(d => d.name.endsWith('.json')).map(async d => {
                     const r = await fetch(d.download_url);
@@ -122,11 +130,6 @@
         }
 
         yazilariYukle();
-        if (window.netlifyIdentity) {
-            window.netlifyIdentity.on("init", user => {
-                if (!user) { window.netlifyIdentity.on("login", () => { document.location.href = "/admin/"; }); }
-            });
-        }
     </script>
 </body>
 </html>
