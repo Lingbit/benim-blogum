@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lingbit | Dil, Yaşam ve Motivasyon</title>
+    <link href="https://googleapis.com" rel="stylesheet">
+    <script src="https://jsdelivr.net"></script>
+    </script>
+    <style>
+        :root {
+            --bg-color: #FDF8F5;
+            --card-bg: #FFFFFF;
+            --primary: #F4C2C2;
+            --text-dark: #4A4A4A;
+            --text-light: #7A7A7A;
+        }
+        body { font-family: 'Quicksand', sans-serif; background-color: var(--bg-color); color: var(--text-dark); margin: 0; padding: 0; line-height: 1.6; }
+        header { background-color: var(--card-bg); padding: 30px 20px; text-align: center; border-bottom: 2px solid var(--primary); }
+        header h1 { margin: 0; font-size: 2.5rem; letter-spacing: 2px; }
+        header p { color: var(--text-light); margin-top: 5px; }
+        nav { display: flex; justify-content: center; gap: 12px; padding: 15px; background-color: #FFFDFB; flex-wrap: wrap; }
+        nav button { background-color: var(--bg-color); border: 1px solid var(--primary); padding: 8px 18px; border-radius: 20px; font-family: 'Quicksand', sans-serif; font-weight: 600; color: var(--text-dark); cursor: pointer; transition: all 0.3s ease; }
+        nav button:hover, nav button.active { background-color: var(--primary); color: #FFFFFF; }
+        .container { max-width: 950px; margin: 35px auto; padding: 0 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 25px; }
+        .post-card { background-color: var(--card-bg); border-radius: 18px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.03); border: 1px solid #F3EAE8; transition: transform 0.2s ease; cursor: pointer; display: flex; flex-direction: column; }
+        .post-card:hover { transform: translateY(-5px); }
+        .post-card img { width: 100%; height: 180px; object-fit: cover; }
+        .card-content { padding: 20px; }
+        .tag { display: inline-block; padding: 4px 12px; border-radius: 12px; font-size: 0.8rem; font-weight: 700; margin-bottom: 10px; text-transform: capitalize; }
+        .tag.korece { background-color: #FCE4EC; color: #AD1457; }
+        .tag.japonca { background-color: #E8F5E9; color: #2E7D32; }
+        .tag.ingilizce { background-color: #E3F2FD; color: #1565C0; }
+        .tag.lifestyle { background-color: #FFF3E0; color: #EF6C00; }
+        .tag.motivasyon { background-color: #F3E5F5; color: #6A1B9A; }
+        .post-card h2 { margin: 0 0 10px 0; font-size: 1.25rem; }
+        .post-card p { color: var(--text-light); font-size: 0.95rem; margin: 0; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); justify-content: center; align-items: center; padding: 20px; box-sizing: border-box; z-index: 1000; }
+        .modal-content { background: var(--card-bg); max-width: 680px; width: 100%; max-height: 85vh; overflow-y: auto; border-radius: 20px; padding: 30px; position: relative; }
+        .modal-content img { max-width: 100%; border-radius: 12px; margin: 15px 0; }
+        .close-btn { position: absolute; top: 15px; right: 20px; font-size: 1.8rem; cursor: pointer; color: var(--text-light); }
+        footer { text-align: center; padding: 30px; color: var(--text-light); font-size: 0.9rem; margin-top: 40px; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>✨ Lingbit</h1>
+        <p>Korece • Japonca • İngilizce • Lifestyle & Motivasyon</p>
+    </header>
+    <nav>
+        <button class="active" onclick="filtrele('hepsi', this)">Tümü</button>
+        <button onclick="filtrele('korece', this)">🇰🇷 Korece</button>
+        <button onclick="filtrele('japonca', this)">🇯🇵 Japonca</button>
+        <button onclick="filtrele('ingilizce', this)">🇬🇧 İngilizce</button>
+        <button onclick="filtrele('lifestyle', this)">🌸 Lifestyle</button>
+        <button onclick="filtrele('motivasyon', this)">✨ Motivasyon</button>
+    </nav>
+    <main class="container" id="blog-alani"><p style="text-align:center;">Yazılar yükleniyor...</p></main>
+    <div class="modal" id="okuma-penceresi" onclick="if(event.target.id==='okuma-penceresi') this.style.display='none'">
+        <div class="modal-content">
+            <span class="close-btn" onclick="document.getElementById('okuma-penceresi').style.display='none'">&times;</span>
+            <span id="modal-etiket" class="tag"></span>
+            <h2 id="modal-baslik"></h2>
+            <img id="modal-resim" src="" alt="">
+            <div id="modal-icerik"></div>
+        </div>
+    </div>
+    <footer>© 2026 Lingbit Blog • Sevgiyle tasarlandı 🌸</footer>
+    <script>
+        const GITHUB_KULLANICI = "Lingbit";
+        const DEPO_ADI = "benim-blogum";
+        let tumYazilar = [];
+
+        async function yazilariYukle() {
+            try {
+                const res = await fetch(`https://github.com{Lingbit}/${DEPO_ADI}/contents/_posts`);
+                const dosyalar = await res.json();
+                const icerikler = await Promise.all(dosyalar.filter(d => d.name.endsWith('.json')).map(async d => {
+                    const r = await fetch(d.download_url);
+                    return await r.json();
+                }));
+                tumYazilar = icerikler.reverse();
+                yazilariGoster('hepsi');
+            } catch (e) {
+                document.getElementById('blog-alani').innerHTML = "<p>Henüz yazı bulunamadı.</p>";
+            }
+        }
+
+        function yazilariGoster(kat) {
+            const alan = document.getElementById("blog-alani");
+            alan.innerHTML = "";
+            tumYazilar.forEach((y, idx) => {
+                if (kat === "hepsi" || y.kategori === kat) {
+                    alan.innerHTML += `
+                        <article class="post-card" onclick="yaziAc(${idx})">
+                            ${y.resim ? `<img src="${y.resim}" alt="${y.baslik}">` : ''}
+                            <div class="card-content">
+                                <span class="tag ${y.kategori}">${y.kategori}</span>
+                                <h2>${y.baslik}</h2>
+                                <p>${y.ozet}</p>
+                            </div>
+                        </article>`;
+                }
+            });
+        }
+
+        function filtrele(kat, btn) {
+            document.querySelectorAll("nav button").forEach(b => b.classList.remove("active"));
+            btn.classList.add("active");
+            yazilariGoster(kat);
+        }
+
+        function yaziAc(idx) {
+            const y = tumYazilar[idx];
+            document.getElementById("modal-etiket").className = "tag " + y.kategori;
+            document.getElementById("modal-etiket").innerText = y.kategori;
+            document.getElementById("modal-baslik").innerText = y.baslik;
+            const img = document.getElementById("modal-resim");
+            if(y.resim) { img.src = y.resim; img.style.display = "block"; } else { img.style.display = "none"; }
+            document.getElementById("modal-icerik").innerHTML = marked.parse(y.icerik || "");
+            document.getElementById("okuma-penceresi").style.display = "flex";
+        }
+
+        yazilariYukle();
+        if (window.netlifyIdentity) {
+            window.netlifyIdentity.on("init", user => {
+                if (!user) { window.netlifyIdentity.on("login", () => { document.location.href = "/admin/"; }); }
+            });
+        }
+    </script>
+</body>
+</html>
