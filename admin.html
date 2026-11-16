@@ -68,12 +68,9 @@ button{background:#F4C2C2;color:#FFF;border:none;padding:12px;border-radius:10px
 </div>
 
 <script>
-const KULLANICI = "Lingbit";
-const DEPO = "benim-blogum";
-const SIFRE = "Tkarul2026++";
-
-const API_URL = "https://github.com" + KULLANICI + "/" + DEPO + "/contents/";
-const RAW_URL = "https://githubusercontent.com" + KULLANICI + "/" + DEPO + "/main/";
+const API_URL = "https://github.com";
+const RAW_URL = "https://githubusercontent.com";
+const SIFRE = "1234";
 
 let duzenleYol = null, duzenleSha = null, eskiKapak = "", yazilar = [];
 if(localStorage.getItem("tk")) document.getElementById("token").value = localStorage.getItem("tk");
