@@ -1,173 +1,196 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lingbit | Yönetim Paneli</title>
-    <link href="https://googleapis.com" rel="stylesheet">
-    <style>
-        body { font-family: 'Quicksand', sans-serif; background: #FDF8F5; color: #4A4A4A; margin: 0; padding: 30px 15px; }
-        .panel { max-width: 680px; margin: 0 auto; background: #FFF; padding: 30px; border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); border: 1px solid #F4C2C2; }
-        h1 { text-align: center; margin-top: 0; }
-        .tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #FDF8F5; padding-bottom: 10px; }
-        .tab-btn { flex: 1; background: #FDF8F5; color: #4A4A4A; margin: 0; padding: 10px; border-radius: 12px; border: 1px solid #F4C2C2; cursor: pointer; font-weight: 700; }
-        .tab-btn.active { background: #F4C2C2; color: #FFF; }
-        label { display: block; font-weight: 700; margin: 14px 0 5px; }
-        input, select, textarea { width: 100%; padding: 12px; border: 1px solid #E5D4D4; border-radius: 12px; font-family: inherit; box-sizing: border-box; }
-        textarea { height: 180px; resize: vertical; }
-        button.main-btn { background: #F4C2C2; color: #FFF; border: none; padding: 14px; border-radius: 14px; font-family: inherit; font-weight: 700; font-size: 1rem; cursor: pointer; width: 100%; margin-top: 20px; }
-        button.main-btn:hover { background: #E5A9A9; }
-        .small-btn { background: #E8F5E9; color: #2E7D32; border: none; padding: 8px 14px; border-radius: 10px; font-weight: 700; cursor: pointer; margin-top: 8px; }
-        .yazi-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #F3EAE8; gap: 10px; }
-        .duzenle-btn { background: #E3F2FD; color: #1565C0; border: none; padding: 6px 12px; border-radius: 8px; cursor: pointer; font-weight: 700; }
-        .sil-btn { background: #FFEBEE; color: #C62828; border: none; padding: 6px 12px; border-radius: 8px; cursor: pointer; font-weight: 700; }
-        .iptal-btn { background: #EEE; color: #555; border: none; padding: 10px; border-radius: 12px; cursor: pointer; font-weight: 700; width: 100%; margin-top: 10px; display: none; }
-        #durum { text-align: center; font-weight: 700; margin-top: 15px; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lingbit Yönetim</title>
+<style>
+body{font-family:sans-serif;background:#FDF8F5;color:#4A4A4A;padding:20px}
+.box{max-width:650px;margin:auto;background:#FFF;padding:25px;border-radius:16px;border:1px solid #F4C2C2}
+input,select,textarea{width:100%;padding:10px;margin:8px 0 15px;border:1px solid #E5D4D4;border-radius:8px;box-sizing:border-box}
+button{background:#F4C2C2;color:#FFF;border:none;padding:12px;border-radius:10px;font-weight:bold;cursor:pointer;width:100%;margin-top:5px}
+.tabs{display:flex;gap:8px;margin-bottom:15px}
+.tab{background:#FDF8F5;color:#4A4A4A;border:1px solid #F4C2C2}
+.tab.aktif{background:#F4C2C2;color:#FFF}
+.satir{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #EEE}
+.kucuk{width:auto;padding:5px 10px;font-size:12px;margin:0 2px}
+</style>
 </head>
 <body>
-    <div class="panel" id="giris-ekrani" style="max-width: 400px;">
-        <h1>🔒 Panel Girişi</h1>
-        <label>Panel Şifren:</label>
-        <input type="password" id="sifre-input" placeholder="Şifreni gir...">
-        <button type="button" class="main-btn" onclick="girisYap()">Giriş Yap</button>
-    </div>
 
-    <div class="panel" id="yonetim-ekrani" style="display:none;">
-        <h1>🌸 Blog Yönetim Merkezi</h1>
-        
-        <label>GitHub Anahtarı (Token):</label>
-        <input type="password" id="token" placeholder="ghp_... anahtarın">
+<div class="box" id="giris" style="max-width:360px">
+  <h2>🔒 Panel Girişi</h2>
+  <input type="password" id="sifre" placeholder="Şifren (1234)">
+  <button onclick="ac()">Giriş Yap</button>
+</div>
 
-        <div class="tabs" style="margin-top: 20px;">
-            <button type="button" class="tab-btn active" id="tab-yazi" onclick="sekmeAc('yazi-ekle', this)">✍️ Yeni Yazı</button>
-            <button type="button" class="tab-btn" onclick="sekmeAc('ana-sayfa', this)">🏠 Ana Sayfa Ayarları</button>
-            <button type="button" class="tab-btn" onclick="sekmeAc('yazilarim', this)">📚 Yazıları Yönet</button>
-        </div>
+<div class="box" id="panel" style="display:none">
+  <h2>🌸 Lingbit Yönetim</h2>
+  <input type="password" id="token" placeholder="GitHub Token (ghp_...)">
+  
+  <div class="tabs">
+    <button class="tab aktif" id="b1" onclick="sekme('s1',this)">✍️ Yazı Ekle/Düzenle</button>
+    <button class="tab" id="b2" onclick="sekme('s2',this)">🏠 Ana Sayfa</button>
+    <button class="tab" id="b3" onclick="sekme('s3',this)">📚 Yazılarım</button>
+  </div>
 
-        <div id="yazi-ekle" class="sekme">
-            <h3 id="form-baslik" style="margin:0 0 10px; color:#E5A9A9;">Yeni Yazı Oluştur</h3>
-            <label>Yazı Başlığı:</label>
-            <input type="text" id="baslik" placeholder="Örn: Korece Günlük Kalıplar">
-            <label>Kategori:</label>
-            <select id="kategori">
-                <option value="korece">🇰🇷 Korece</option>
-                <option value="japonca">🇯🇵 Japonca</option>
-                <option value="ingilizce">🇬🇧 İngilizce</option>
-                <option value="lifestyle">🌸 Lifestyle</option>
-                <option value="motivasyon">✨ Motivasyon</option>
-            </select>
-            <label>Kapak Görseli (Değiştirmek istemiyorsan boş bırakabilirsin):</label>
-            <input type="file" id="kapakDosya" accept="image/*">
-            <label>Kısa Özet:</label>
-            <input type="text" id="ozet" placeholder="Ana sayfada görünecek özet...">
-            <label>Yazı İçeriği:</label>
-            <textarea id="icerik" placeholder="Yazını buraya yaz..."></textarea>
-            <input type="file" id="icerikResimDosya" accept="image/*" style="display:none" onchange="icerigeResimYukle()">
-            <button type="button" class="small-btn" onclick="document.getElementById('icerikResimDosya').click()">🖼️ Metnin İçine Fotoğraf Ekle</button>
-            <button type="button" class="main-btn" id="yayinla-btn" onclick="yayinla()">✨ Yazıyı Yayınla</button>
-            <button type="button" class="iptal-btn" id="iptal-btn" onclick="duzenlemeIptal()">❌ Düzenlemekten Vazgeç (Yeni Yazıya Dön)</button>
-        </div>
+  <div id="s1" class="alan">
+    <input type="text" id="baslik" placeholder="Yazı Başlığı">
+    <select id="kategori">
+      <option value="korece">Korece</option>
+      <option value="japonca">Japonca</option>
+      <option value="ingilizce">İngilizce</option>
+      <option value="lifestyle">Lifestyle</option>
+      <option value="motivasyon">Motivasyon</option>
+    </select>
+    <label>Kapak Fotoğrafı:</label>
+    <input type="file" id="kapak" accept="image/*">
+    <input type="text" id="ozet" placeholder="Kısa Özet">
+    <textarea id="icerik" rows="8" placeholder="Yazı içeriği..."></textarea>
+    <input type="file" id="icResim" accept="image/*" style="display:none" onchange="resimEkle()">
+    <button type="button" style="background:#A8D5BA;margin-bottom:10px" onclick="document.getElementById('icResim').click()">🖼️ Metin İçi Fotoğraf Ekle</button>
+    <button onclick="kaydet()" id="kaydetBtn">✨ Yayınla</button>
+    <button onclick="sifirla()" id="iptalBtn" style="background:#CCC;display:none">İptal</button>
+  </div>
 
-        <div id="ana-sayfa" class="sekme" style="display:none;">
-            <label>Blog Ana Başlığı:</label>
-            <input type="text" id="siteBaslik" placeholder="Yükleniyor...">
-            <label>Alt Slogan / Açıklama:</label>
-            <input type="text" id="altBaslik" placeholder="Yükleniyor...">
-            <label>Hakkımda Kutusu Metni:</label>
-            <textarea id="hakkimda" style="height:100px;" placeholder="Yükleniyor..."></textarea>
-            <button type="button" class="main-btn" onclick="ayarlariKaydet()">💾 Ana Sayfa Değişikliklerini Kaydet</button>
-        </div>
+  <div id="s2" class="alan" style="display:none">
+    <input type="text" id="aBaslik" placeholder="Site Ana Başlığı">
+    <input type="text" id="aAlt" placeholder="Alt Slogan">
+    <textarea id="aHakkimda" rows="4" placeholder="Hakkımda Yazısı"></textarea>
+    <button onclick="ayarKaydet()">💾 Ana Sayfayı Güncelle</button>
+  </div>
 
-        <div id="yazilarim" class="sekme" style="display:none;">
-            <div id="yazi-listesi">Yükleniyor...</div>
-        </div>
+  <div id="s3" class="alan" style="display:none">
+    <div id="liste">Yükleniyor...</div>
+  </div>
 
-        <p id="durum"></p>
-    </div>
+  <p id="mesaj" style="text-align:center;font-weight:bold"></p>
+</div>
 
-    <script>
-        const KULLANICI = "Lingbit";
-        const DEPO = "benim-blogum";
-        const PANEL_SIFRESI = "Tkarul2026++";
+<script>
+const KULLANICI = "Lingbit";
+const DEPO = "benim-blogum";
+const SIFRE = "Tkarul2026++";
 
-        let duzenlenenYol = null;
-        let duzenlenenSha = null;
-        let mevcutKapakUrl = "";
-        let kayitliYazilar = [];
+let duzenleYol = null, duzenleSha = null, eskiKapak = "", yazilar = [];
+if(localStorage.getItem("tk")) document.getElementById("token").value = localStorage.getItem("tk");
 
-        if(localStorage.getItem("blog_token")) {
-            document.getElementById("token").value = localStorage.getItem("blog_token");
-        }
+function ac() {
+  if(document.getElementById("sifre").value === SIFRE) {
+    document.getElementById("giris").style.display = "none";
+    document.getElementById("panel").style.display = "block";
+    ayarGetir();
+  } else alert("Yanlış şifre!");
+}
 
-        function girisYap() {
-            const girilen = document.getElementById("sifre-input").value.trim();
-            if(girilen === PANEL_SIFRESI) {
-                document.getElementById("giris-ekrani").style.display = "none";
-                document.getElementById("yonetim-ekrani").style.display = "block";
-                mevcutAyarlariGetir();
-            } else {
-                alert("Hatalı şifre! Koddaki PANEL_SIFRESI değerini girdiğinden emin ol.");
-            }
-        }
+function sekme(id, btn) {
+  document.querySelectorAll(".alan").forEach(e => e.style.display = "none");
+  document.querySelectorAll(".tab").forEach(e => e.classList.remove("aktif"));
+  document.getElementById(id).style.display = "block";
+  btn.classList.add("aktif");
+  if(id === "s2") ayarGetir();
+  if(id === "s3") listeGetir();
+}
 
-        function sekmeAc(id, btn) {
-            document.querySelectorAll(".sekme").forEach(s => s.style.display = "none");
-            document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
-            document.getElementById(id).style.display = "block";
-            btn.classList.add("active");
-            if(id === "ana-sayfa") mevcutAyarlariGetir();
-            if(id === "yazilarim") yazilariListele();
-        }
+const b64 = f => new Promise(r => { const fr = new FileReader(); fr.onload = () => r(fr.result.split(',').pop()); fr.readAsDataURL(f); });
 
-        function dosyaBase64(file) {
-            return new Promise(res => {
-                const r = new FileReader();
-                r.onload = () => res(r.result.split(',').pop());
-                r.readAsDataURL(file);
-            });
-        }
+async function apiPut(yol, icerikB64, msj, sha=null) {
+  const tk = document.getElementById("token").value.trim();
+  if(!tk) throw new Error("GitHub Token girmelisin!");
+  localStorage.setItem("tk", tk);
+  const body = { message: msj, content: icerikB64 };
+  if(sha) body.sha = sha;
+  const res = await fetch(`https://github.com{KULLANICI}/${DEPO}/contents/${yol}`, {
+    method: "PUT", headers: { "Authorization": `token ${tk}`, "Content-Type": "application/json" }, body: JSON.stringify(body)
+  });
+  if(!res.ok) throw new Error("GitHub hatası! Token veya kullanıcı adını kontrol et.");
+}
 
-        async function githubIslem(yol, icerikB64, mesaj, token, sha = null) {
-            const body = { message: mesaj, content: icerikB64 };
-            if(sha) body.sha = sha;
-            const res = await fetch(`https://github.com{KULLANICI}/${DEPO}/contents/${yol}`, {
-                method: "PUT",
-                headers: { "Authorization": `token ${token}`, "Content-Type": "application/json" },
-                body: JSON.stringify(body)
-            });
-            if (!res.ok) throw new Error("İşlem başarısız! Token veya kullanıcı adını kontrol et.");
-        }
+async function ayarGetir() {
+  try {
+    const r = await fetch(`https://githubusercontent.com{KULLANICI}/${DEPO}/main/ayarlar.json?t=${Date.now()}`);
+    const d = await r.json();
+    document.getElementById("aBaslik").value = d.siteBaslik || "";
+    document.getElementById("aAlt").value = d.altBaslik || "";
+    document.getElementById("aHakkimda").value = d.hakkimda || "";
+  } catch(e) {}
+}
 
-        async function mevcutAyarlariGetir() {
-            try {
-                const res = await fetch(`https://githubusercontent.com{KULLANICI}/${DEPO}/main/ayarlar.json?t=${Date.now()}`);
-                const ayar = await res.json();
-                document.getElementById("siteBaslik").value = ayar.siteBaslik || "";
-                document.getElementById("altBaslik").value = ayar.altBaslik || "";
-                document.getElementById("hakkimda").value = ayar.hakkimda || "";
-            } catch(e) {}
-        }
+async function ayarKaydet() {
+  const m = document.getElementById("mesaj"); m.innerText = "⏳ Kaydediliyor...";
+  try {
+    const g = await (await fetch(`https://github.com{KULLANICI}/${DEPO}/contents/ayarlar.json?t=${Date.now()}`)).json();
+    const veri = { siteBaslik: document.getElementById("aBaslik").value, altBaslik: document.getElementById("aAlt").value, hakkimda: document.getElementById("aHakkimda").value };
+    await apiPut("ayarlar.json", btoa(unescape(encodeURIComponent(JSON.stringify(veri,null,2)))), "Ayarlar", g.sha);
+    m.innerText = "✅ Ana sayfa güncellendi!";
+  } catch(e) { m.innerText = "❌ " + e.message; }
+}
 
-        async function ayarlariKaydet() {
-            const token = document.getElementById("token").value.trim();
-            if(!token) return alert("Üstteki kutuya GitHub Token girmelisin!");
-            localStorage.setItem("blog_token", token);
-            document.getElementById("durum").innerText = "⏳ Ana sayfa güncelleniyor...";
-            try {
-                const getRes = await fetch(`https://github.com{KULLANICI}/${DEPO}/contents/ayarlar.json?t=${Date.now()}`);
-                const getData = await getRes.json();
-                const yeniAyar = {
-                    siteBaslik: document.getElementById("siteBaslik").value,
-                    altBaslik: document.getElementById("altBaslik").value,
-                    hakkimda: document.getElementById("hakkimda").value
-                };
-                const b64 = btoa(unescape(encodeURIComponent(JSON.stringify(yeniAyar, null, 2))));
-                await githubIslem("ayarlar.json", b64, "Ana sayfa ayarları güncellendi", token, getData.sha);
-                document.getElementById("durum").innerText = "✅ Ana sayfa başarıyla güncellendi!";
-            } catch(e) { document.getElementById("durum").innerText = "❌ Hata: " + e.message; }
-        }
- </script>
-        async function yazilariListele() {
-            const liste = document.getElementById("yazi-listesi");
-            liste.innerHTML = "Yükleniyor...";
+async function listeGetir() {
+  const l = document.getElementById("liste"); l.innerHTML = "Yükleniyor...";
+  const dosyalar = await (await fetch(`https://github.com{KULLANICI}/${DEPO}/contents/_posts?t=${Date.now()}`)).json();
+  l.innerHTML = ""; yazilar = [];
+  for(const d of dosyalar) {
+    if(d.name.endsWith(".json")) {
+      const y = await (await fetch(d.download_url + `?t=${Date.now()}`)).json();
+      const i = yazilar.push({...y, path: d.path, sha: d.sha}) - 1;
+      l.innerHTML += `<div class="satir"><span>${y.baslik}</span><div><button class="kucuk" style="background:#89CFF0" onclick="duzenle(${i})">Düzenle</button><button class="kucuk" style="background:#F08080" onclick="sil('${d.path}','${d.sha}')">Sil</button></div></div>`;
+    }
+  }
+}
+
+function duzenle(i) {
+  const y = yazilar[i]; duzenleYol = y.path; duzenleSha = y.sha; eskiKapak = y.resim || "";
+  document.getElementById("baslik").value = y.baslik; document.getElementById("kategori").value = y.kategori;
+  document.getElementById("ozet").value = y.ozet; document.getElementById("icerik").value = y.icerik;
+  document.getElementById("kaydetBtn").innerText = "💾 Değişiklikleri Kaydet";
+  document.getElementById("iptalBtn").style.display = "block";
+  sekme("s1", document.getElementById("b1"));
+}
+
+function sifirla() {
+  duzenleYol = null; duzenleSha = null; eskiKapak = "";
+  ["baslik","ozet","icerik"].forEach(id => document.getElementById(id).value = "");
+  document.getElementById("kaydetBtn").innerText = "✨ Yayınla";
+  document.getElementById("iptalBtn").style.display = "none";
+}
+
+async function sil(yol, sha) {
+  const tk = document.getElementById("token").value.trim();
+  if(!tk || !confirm("Silinsin mi?")) return;
+  await fetch(`https://github.com{KULLANICI}/${DEPO}/contents/${yol}`, {
+    method: "DELETE", headers: { "Authorization": `token ${tk}`, "Content-Type": "application/json" }, body: JSON.stringify({ message: "Sil", sha })
+  });
+  listeGetir();
+}
+
+async function resimEkle() {
+  const f = document.getElementById("icResim").files[0]; if(!f) return;
+  const m = document.getElementById("mesaj"); m.innerText = "⏳ Fotoğraf yükleniyor...";
+  try {
+    const ad = `images/${Date.now()}-${f.name.replace(/\s+/g,'-')}`;
+    await apiPut(ad, await b64(f), "Resim");
+    document.getElementById("icerik").value += `\n\n![Görsel](https://githubusercontent.com{KULLANICI}/${DEPO}/main/${ad})\n\n`;
+    m.innerText = "✅ Fotoğraf eklendi!";
+  } catch(e) { m.innerText = "❌ " + e.message; }
+}
+
+async function kaydet() {
+  const m = document.getElementById("mesaj"); m.innerText = "⏳ Kaydediliyor...";
+  try {
+    let kapakUrl = eskiKapak;
+    const f = document.getElementById("kapak").files[0];
+    if(f) {
+      const ad = `images/${Date.now()}-${f.name.replace(/\s+/g,'-')}`;
+      await apiPut(ad, await b64(f), "Kapak");
+      kapakUrl = `https://githubusercontent.com{KULLANICI}/${DEPO}/main/${ad}`;
+    }
+    const veri = { baslik: document.getElementById("baslik").value, kategori: document.getElementById("kategori").value, resim: kapakUrl, ozet: document.getElementById("ozet").value, icerik: document.getElementById("icerik").value };
+    const yol = duzenleYol || `_posts/${Date.now()}.json`;
+    await apiPut(yol, btoa(unescape(encodeURIComponent(JSON.stringify(veri,null,2)))), "Yazı", duzenleSha);
+    m.innerText = "🎉 Başarıyla kaydedildi!"; sifirla();
+  } catch(e) { m.innerText = "❌ " + e.message; }
+}
+</script>
+</body>
+</html>
