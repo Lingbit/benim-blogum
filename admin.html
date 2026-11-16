@@ -103,20 +103,20 @@ function dosyaOku(dosya) {
 
 async function apiPut(yol, icerikB64, msj, sha=null) {
   const tk = document.getElementById("token").value.trim();
-  if(!tk) throw new Error("GitHub Token girmelisin!");
+  if(!tk) throw new Error("GitHub Token kutusu boş!");
   localStorage.setItem("tk", tk);
   const body = { message: msj, content: icerikB64 };
   if(sha) body.sha = sha;
-  const res = await fetch(API_URL + yol, {
+  const hedefUrl = "https://github.com" + yol;
+  const res = await fetch(hedefUrl, {
     method: "PUT",
-    headers: { "Authorization": "Bearer " + tk, "Accept": "application/vnd.github+json", "Content-Type": "application/json" },
+    headers: { "Authorization": "token " + tk, "Content-Type": "application/json" },
     body: JSON.stringify(body)
   });
-  if(!res.ok) {
-    const err = await res.json();
-    throw new Error(err.message || "GitHub hatası!");
-  }
+  const veri = await res.json();
+  if(!res.ok) throw new Error("GitHub Yanıtı (" + res.status + "): " + veri.message + " | Adres: " + hedefUrl);
 }
+  }
 
 async function ayarGetir() {
   try {
