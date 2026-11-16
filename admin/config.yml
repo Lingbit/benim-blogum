@@ -18,4 +18,4 @@ collections:
       - {label: "Kategori", name: "kategori", widget: "select", options: ["korece", "japonca", "ingilizce", "lifestyle", "motivasyon"]}
       - {label: "Kapak Görseli", name: "resim", widget: "image"}
       - {label: "Kısa Özet", name: "ozet", widget: "text"}
-      - {label: "Yazı İçeriği (İçine görsel ekleyebilirsin)", name: "icerik", widget: "markdown"}
+      - {label: "Yazı İçeriği", name: "icerik", widget: "markdown"}
