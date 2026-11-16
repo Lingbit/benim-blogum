@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lingbit | Özel Yönetim Paneli</title>
+    <link href="https://googleapis.com" rel="stylesheet">
+    <style>
+        body { font-family: 'Quicksand', sans-serif; background: #FDF8F5; color: #4A4A4A; margin: 0; padding: 30px 15px; }
+        .panel { max-width: 650px; margin: 0 auto; background: #FFF; padding: 30px; border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); border: 1px solid #F4C2C2; }
+        h1 { text-align: center; margin-top: 0; color: #4A4A4A; }
+        label { display: block; font-weight: 700; margin: 15px 0 5px; }
+        input, select, textarea { width: 100%; padding: 12px; border: 1px solid #E5D4D4; border-radius: 12px; font-family: inherit; box-sizing: border-box; font-size: 0.95rem; }
+        textarea { height: 220px; resize: vertical; }
+        .btn-group { display: flex; gap: 10px; margin-top: 10px; }
+        button { background: #F4C2C2; color: #FFF; border: none; padding: 14px 22px; border-radius: 14px; font-family: inherit; font-weight: 700; font-size: 1rem; cursor: pointer; width: 100%; margin-top: 20px; transition: 0.2s; }
+        button:hover { background: #E5A9A9; }
+        .small-btn { background: #E8F5E9; color: #2E7D32; padding: 8px 14px; font-size: 0.85rem; width: auto; margin-top: 8px; }
+        .small-btn:hover { background: #C8E6C9; }
+        #durum { text-align: center; font-weight: 700; margin-top: 15px; }
+    </style>
+</head>
+<body>
+    <div class="panel">
+        <h1>🌸 Yeni Blog Yazısı Ekle</h1>
+        
+        <label>Yönetim Anahtarı (GitHub Token):</label>
+        <input type="password" id="token" placeholder="ghp_... ile başlayan anahtarını buraya yapıştır">
+
+        <label>Yazı Başlığı:</label>
+        <input type="text" id="baslik" placeholder="Örn: Korece Günlük Kalıplar">
+
+        <label>Kategori:</label>
+        <select id="kategori">
+            <option value="korece">🇰🇷 Korece</option>
+            <option value="japonca">🇯🇵 Japonca</option>
+            <option value="ingilizce">🇬🇧 İngilizce</option>
+            <option value="lifestyle">🌸 Lifestyle</option>
+            <option value="motivasyon">✨ Motivasyon</option>
+        </select>
+
+        <label>Kapak Görseli (Cihazından Seç):</label>
+        <input type="file" id="kapakDosya" accept="image/*">
+
+        <label>Kısa Özet (Ana sayfada görünecek):</label>
+        <input type="text" id="ozet" placeholder="Yazının kısa tanıtımı...">
+
+        <label>Yazı İçeriği:</label>
+        <textarea id="icerik" placeholder="Yazını buraya yaz... Paragraf aralarına fotoğraf eklemek için aşağıdaki yeşil butonu kullanabilirsin."></textarea>
+        
+        <input type="file" id="icerikResimDosya" accept="image/*" style="display:none" onchange="icerigeResimYukle()">
+        <button type="button" class="small-btn" onclick="document.getElementById('icerikResimDosya').click()">🖼️ Yazının İçine Fotoğraf Ekle</button>
+
+        <button onclick="yayinla()">✨ Yazıyı Yayınla</button>
+        <p id="durum"></p>
+    </div>
+
+    <script>
+        const KULLANICI = "Lingbit";
+        const DEPO = "benim-blogum";
+
+        // Kayıtlı token varsa otomatik doldur
+        if(localStorage.getItem("blog_token")) {
+            document.getElementById("token").value = localStorage.getItem("blog_token");
+        }
+
+        function dosyaBase64(file) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result.split(',')[1]);
+                reader.readAsDataURL(file);
+            });
+        }
+
+        async function githubaYukle(yol, icerikBase64, mesaj, token) {
+            const res = await fetch(`https://github.com{KULLANICI}/${DEPO}/contents/${yol}`, {
+                method: "PUT",
+                headers: { "Authorization": `token ${token}`, "Content-Type": "application/json" },
+                body: JSON.stringify({ message: mesaj, content: icerikBase64 })
+            });
+            if (!res.ok) throw new Error("Yükleme başarısız! Token veya kullanıcı adını kontrol et.");
+            return await res.json();
+        }
+
+        async function icerigeResimYukle() {
+            const file = document.getElementById("icerikResimDosya").files[0];
+            const token = document.getElementById("token").value.trim();
+            if (!file || !token) return alert("Önce üstteki kutuya Yönetim Anahtarını (Token) girmelisin!");
+            
+            document.getElementById("durum").innerText = "⏳ Fotoğraf yazıya ekleniyor...";
+            try {
+                const dosyaAdi = `images/${Date.now()}-${file.name.replace(/\s+/g, '-')}`;
+                const b64 = await dosyaBase64(file);
+                await githubaYukle(dosyaAdi, b64, "İçerik görseli eklendi", token);
+                const imgUrl = `https://githubusercontent.com{KULLANICI}/${DEPO}/main/${dosyaAdi}`;
+                document.getElementById("icerik").value += `\n\n![Görsel](${imgUrl})\n\n`;
+                document.getElementById("durum").innerText = "✅ Fotoğraf metne eklendi!";
+            } catch (e) {
+                document.getElementById("durum").innerText = "❌ Hata: " + e.message;
+            }
+        }
+
+        async function yayinla() {
+            const token = document.getElementById("token").value.trim();
+            const baslik = document.getElementById("baslik").value.trim();
+            const kategori = document.getElementById("kategori").value;
+            const ozet = document.getElementById("ozet").value.trim();
+            const icerik = document.getElementById("icerik").value;
+            const kapakFile = document.getElementById("kapakDosya").files[0];
+
+            if (!token || !baslik || !icerik) return alert("Lütfen anahtar, başlık ve içerik alanlarını doldur!");
+            localStorage.setItem("blog_token", token);
+            document.getElementById("durum").innerText = "⏳ Yazın yayınlanıyor, lütfen bekle...";
+
+            try {
+                let kapakUrl = "";
+                if (kapakFile) {
+                    const kapakAdi = `images/${Date.now()}-${kapakFile.name.replace(/\s+/g, '-')}`;
+                    const kapakB64 = await dosyaBase64(kapakFile);
+                    await githubaYukle(kapakAdi, kapakB64, "Kapak görseli", token);
+                    kapakUrl = `https://githubusercontent.com{KULLANICI}/${DEPO}/main/${kapakAdi}`;
+                }
+
+                const yeniYazi = { baslik, kategori, resim: kapakUrl, ozet, icerik };
+                const jsonMetin = unescape(encodeURIComponent(JSON.stringify(yeniYazi, null, 2)));
+                const jsonB64 = btoa(jsonMetin);
+                const dosyaYolu = `_posts/${Date.now()}.json`;
+
+                await githubaYukle(dosyaYolu, jsonB64, `Yeni yazı: ${baslik}`, token);
+                document.getElementById("durum").innerText = "🎉 Harika! Yazın başarıyla yayınlandı, ana sayfada görebilirsin!";
+            } catch (e) {
+                document.getElementById("durum").innerText = "❌ Hata: " + e.message;
+            }
+        }
+    </script>
+</body>
+</html>
