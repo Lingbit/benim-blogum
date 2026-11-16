@@ -72,6 +72,9 @@ const KULLANICI = "Lingbit";
 const DEPO = "benim-blogum";
 const SIFRE = "Tkarul2026++";
 
+const API_URL = "https://github.com" + KULLANICI + "/" + DEPO + "/contents/";
+const RAW_URL = "https://githubusercontent.com" + KULLANICI + "/" + DEPO + "/main/";
+
 let duzenleYol = null, duzenleSha = null, eskiKapak = "", yazilar = [];
 if(localStorage.getItem("tk")) document.getElementById("token").value = localStorage.getItem("tk");
 
@@ -95,10 +98,7 @@ function sekme(id, btn) {
 function dosyaOku(dosya) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onload = () => {
-      const parcalar = reader.result.split(',');
-      resolve(parcalar);
-    };
+    reader.onload = () => resolve(reader.result.split(',').pop());
     reader.onerror = reject;
     reader.readAsDataURL(dosya);
   });
@@ -110,9 +110,9 @@ async function apiPut(yol, icerikB64, msj, sha=null) {
   localStorage.setItem("tk", tk);
   const body = { message: msj, content: icerikB64 };
   if(sha) body.sha = sha;
-  const res = await fetch(`https://github.com{KULLANICI}/${DEPO}/contents/${yol}`, {
+  const res = await fetch(API_URL + yol, {
     method: "PUT",
-    headers: { "Authorization": `Bearer ${tk}`, "Accept": "application/vnd.github+json", "Content-Type": "application/json" },
+    headers: { "Authorization": "Bearer " + tk, "Accept": "application/vnd.github+json", "Content-Type": "application/json" },
     body: JSON.stringify(body)
   });
   if(!res.ok) {
@@ -123,7 +123,7 @@ async function apiPut(yol, icerikB64, msj, sha=null) {
 
 async function ayarGetir() {
   try {
-    const r = await fetch(`https://githubusercontent.com{KULLANICI}/${DEPO}/main/ayarlar.json?t=${Date.now()}`);
+    const r = await fetch(RAW_URL + "ayarlar.json?t=" + Date.now());
     const d = await r.json();
     document.getElementById("aBaslik").value = d.siteBaslik || "";
     document.getElementById("aAlt").value = d.altBaslik || "";
@@ -134,7 +134,7 @@ async function ayarGetir() {
 async function ayarKaydet() {
   const m = document.getElementById("mesaj"); m.innerText = "⏳ Kaydediliyor...";
   try {
-    const g = await (await fetch(`https://github.com{KULLANICI}/${DEPO}/contents/ayarlar.json?t=${Date.now()}`)).json();
+    const g = await (await fetch(API_URL + "ayarlar.json?t=" + Date.now())).json();
     const veri = { siteBaslik: document.getElementById("aBaslik").value, altBaslik: document.getElementById("aAlt").value, hakkimda: document.getElementById("aHakkimda").value };
     await apiPut("ayarlar.json", btoa(unescape(encodeURIComponent(JSON.stringify(veri,null,2)))), "Ayarlar", g.sha);
     m.innerText = "✅ Ana sayfa güncellendi!";
@@ -143,13 +143,13 @@ async function ayarKaydet() {
 
 async function listeGetir() {
   const l = document.getElementById("liste"); l.innerHTML = "Yükleniyor...";
-  const dosyalar = await (await fetch(`https://github.com{KULLANICI}/${DEPO}/contents/_posts?t=${Date.now()}`)).json();
+  const dosyalar = await (await fetch(API_URL + "_posts?t=" + Date.now())).json();
   l.innerHTML = ""; yazilar = [];
   for(const d of dosyalar) {
     if(d.name.endsWith(".json")) {
-      const y = await (await fetch(d.download_url + `?t=${Date.now()}`)).json();
+      const y = await (await fetch(d.download_url + "?t=" + Date.now())).json();
       const i = yazilar.push({...y, path: d.path, sha: d.sha}) - 1;
-      l.innerHTML += `<div class="satir"><span>${y.baslik}</span><div><button class="kucuk" style="background:#89CFF0" onclick="duzenle(${i})">Düzenle</button><button class="kucuk" style="background:#F08080" onclick="sil('${d.path}','${d.sha}')">Sil</button></div></div>`;
+      l.innerHTML += '<div class="satir"><span>' + y.baslik + '</span><div><button class="kucuk" style="background:#89CFF0" onclick="duzenle(' + i + ')">Düzenle</button><button class="kucuk" style="background:#F08080" onclick="sil(\'' + d.path + '\',\'' + d.sha + '\')">Sil</button></div></div>';
     }
   }
 }
@@ -173,8 +173,8 @@ function sifirla() {
 async function sil(yol, sha) {
   const tk = document.getElementById("token").value.trim();
   if(!tk || !confirm("Silinsin mi?")) return;
-  await fetch(`https://github.com{KULLANICI}/${DEPO}/contents/${yol}`, {
-    method: "DELETE", headers: { "Authorization": `Bearer ${tk}`, "Content-Type": "application/json" }, body: JSON.stringify({ message: "Sil", sha })
+  await fetch(API_URL + yol, {
+    method: "DELETE", headers: { "Authorization": "Bearer " + tk, "Content-Type": "application/json" }, body: JSON.stringify({ message: "Sil", sha })
   });
   listeGetir();
 }
@@ -185,10 +185,10 @@ async function resimEkle() {
   const f = dosyalar.item(0);
   const m = document.getElementById("mesaj"); m.innerText = "⏳ Fotoğraf yükleniyor...";
   try {
-    const ad = `images/${Date.now()}-${f.name.replace(/[^a-zA-Z0-9.]/g,'-')}`;
+    const ad = "images/" + Date.now() + "-" + f.name.replace(/[^a-zA-Z0-9.]/g,'-');
     const b64Veri = await dosyaOku(f);
     await apiPut(ad, b64Veri, "Resim");
-    document.getElementById("icerik").value += `\n\n![Görsel](https://githubusercontent.com{KULLANICI}/${DEPO}/main/${ad})\n\n`;
+    document.getElementById("icerik").value += "\n\n![Görsel](" + RAW_URL + ad + ")\n\n";
     m.innerText = "✅ Fotoğraf eklendi!";
   } catch(e) { m.innerText = "❌ " + e.message; }
 }
@@ -200,13 +200,13 @@ async function kaydet() {
     const dosyalar = document.getElementById("kapak").files;
     if(dosyalar && dosyalar.length > 0) {
       const f = dosyalar.item(0);
-      const ad = `images/${Date.now()}-${f.name.replace(/[^a-zA-Z0-9.]/g,'-')}`;
+      const ad = "images/" + Date.now() + "-" + f.name.replace(/[^a-zA-Z0-9.]/g,'-');
       const b64Veri = await dosyaOku(f);
       await apiPut(ad, b64Veri, "Kapak");
-      kapakUrl = `https://githubusercontent.com{KULLANICI}/${DEPO}/main/${ad}`;
+      kapakUrl = RAW_URL + ad;
     }
     const veri = { baslik: document.getElementById("baslik").value, kategori: document.getElementById("kategori").value, resim: kapakUrl, ozet: document.getElementById("ozet").value, icerik: document.getElementById("icerik").value };
-    const yol = duzenleYol || `_posts/${Date.now()}.json`;
+    const yol = duzenleYol || ("_posts/" + Date.now() + ".json");
     await apiPut(yol, btoa(unescape(encodeURIComponent(JSON.stringify(veri,null,2)))), "Yazı", duzenleSha);
     m.innerText = "🎉 Başarıyla kaydedildi!"; sifirla();
   } catch(e) { m.innerText = "❌ " + e.message; }
