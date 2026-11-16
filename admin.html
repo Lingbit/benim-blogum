@@ -20,7 +20,7 @@ button{background:#F4C2C2;color:#FFF;border:none;padding:12px;border-radius:10px
 
 <div class="box" id="giris" style="max-width:360px">
   <h2>🔒 Panel Girişi</h2>
-  <input type="password" id="sifre" placeholder="Şifren">
+  <input type="password" id="sifre" placeholder="Şifren (1234)">
   <button onclick="ac()">Giriş Yap</button>
 </div>
 
@@ -40,10 +40,10 @@ button{background:#F4C2C2;color:#FFF;border:none;padding:12px;border-radius:10px
       <option value="korece">Korece</option>
       <option value="japonca">Japonca</option>
       <option value="ingilizce">İngilizce</option>
-      <option value="lifestyle">Gündelik Yaşam</option>
-      <option value="motivasyon">Sanat Sepet</option>
+      <option value="lifestyle">Lifestyle</option>
+      <option value="motivasyon">Motivasyon</option>
     </select>
-    <label>Kapak Fotoğrafı:</label>
+    <label>Kapak Fotoğrafı (İsteğe Bağlı):</label>
     <input type="file" id="kapak" accept="image/*">
     <input type="text" id="ozet" placeholder="Kısa Özet">
     <textarea id="icerik" rows="8" placeholder="Yazı içeriği..."></textarea>
@@ -68,7 +68,7 @@ button{background:#F4C2C2;color:#FFF;border:none;padding:12px;border-radius:10px
 </div>
 
 <script>
-const KULLANICI = "lingbit";
+const KULLANICI = "Lingbit";
 const DEPO = "benim-blogum";
 const SIFRE = "Tkarul2026++";
 
@@ -92,7 +92,17 @@ function sekme(id, btn) {
   if(id === "s3") listeGetir();
 }
 
-const b64 = f => new Promise(r => { const fr = new FileReader(); fr.onload = () => r(fr.result.split(',').pop()); fr.readAsDataURL(f); });
+function dosyaOku(dosya) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const parcalar = reader.result.split(',');
+      resolve(parcalar);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(dosya);
+  });
+}
 
 async function apiPut(yol, icerikB64, msj, sha=null) {
   const tk = document.getElementById("token").value.trim();
@@ -101,9 +111,14 @@ async function apiPut(yol, icerikB64, msj, sha=null) {
   const body = { message: msj, content: icerikB64 };
   if(sha) body.sha = sha;
   const res = await fetch(`https://github.com{KULLANICI}/${DEPO}/contents/${yol}`, {
-    method: "PUT", headers: { "Authorization": `token ${tk}`, "Content-Type": "application/json" }, body: JSON.stringify(body)
+    method: "PUT",
+    headers: { "Authorization": `Bearer ${tk}`, "Accept": "application/vnd.github+json", "Content-Type": "application/json" },
+    body: JSON.stringify(body)
   });
-  if(!res.ok) throw new Error("GitHub hatası! Token veya kullanıcı adını kontrol et.");
+  if(!res.ok) {
+    const err = await res.json();
+    throw new Error(err.message || "GitHub hatası!");
+  }
 }
 
 async function ayarGetir() {
@@ -159,17 +174,20 @@ async function sil(yol, sha) {
   const tk = document.getElementById("token").value.trim();
   if(!tk || !confirm("Silinsin mi?")) return;
   await fetch(`https://github.com{KULLANICI}/${DEPO}/contents/${yol}`, {
-    method: "DELETE", headers: { "Authorization": `token ${tk}`, "Content-Type": "application/json" }, body: JSON.stringify({ message: "Sil", sha })
+    method: "DELETE", headers: { "Authorization": `Bearer ${tk}`, "Content-Type": "application/json" }, body: JSON.stringify({ message: "Sil", sha })
   });
   listeGetir();
 }
 
 async function resimEkle() {
-  const f = document.getElementById("icResim").files[0]; if(!f) return;
+  const dosyalar = document.getElementById("icResim").files;
+  if(!dosyalar || dosyalar.length === 0) return;
+  const f = dosyalar.item(0);
   const m = document.getElementById("mesaj"); m.innerText = "⏳ Fotoğraf yükleniyor...";
   try {
-    const ad = `images/${Date.now()}-${f.name.replace(/\s+/g,'-')}`;
-    await apiPut(ad, await b64(f), "Resim");
+    const ad = `images/${Date.now()}-${f.name.replace(/[^a-zA-Z0-9.]/g,'-')}`;
+    const b64Veri = await dosyaOku(f);
+    await apiPut(ad, b64Veri, "Resim");
     document.getElementById("icerik").value += `\n\n![Görsel](https://githubusercontent.com{KULLANICI}/${DEPO}/main/${ad})\n\n`;
     m.innerText = "✅ Fotoğraf eklendi!";
   } catch(e) { m.innerText = "❌ " + e.message; }
@@ -179,10 +197,12 @@ async function kaydet() {
   const m = document.getElementById("mesaj"); m.innerText = "⏳ Kaydediliyor...";
   try {
     let kapakUrl = eskiKapak;
-    const f = document.getElementById("kapak").files[0];
-    if(f) {
-      const ad = `images/${Date.now()}-${f.name.replace(/\s+/g,'-')}`;
-      await apiPut(ad, await b64(f), "Kapak");
+    const dosyalar = document.getElementById("kapak").files;
+    if(dosyalar && dosyalar.length > 0) {
+      const f = dosyalar.item(0);
+      const ad = `images/${Date.now()}-${f.name.replace(/[^a-zA-Z0-9.]/g,'-')}`;
+      const b64Veri = await dosyaOku(f);
+      await apiPut(ad, b64Veri, "Kapak");
       kapakUrl = `https://githubusercontent.com{KULLANICI}/${DEPO}/main/${ad}`;
     }
     const veri = { baslik: document.getElementById("baslik").value, kategori: document.getElementById("kategori").value, resim: kapakUrl, ozet: document.getElementById("ozet").value, icerik: document.getElementById("icerik").value };
