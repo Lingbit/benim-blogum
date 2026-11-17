@@ -26,7 +26,7 @@ button{background:#F4C2C2;color:#FFF;border:none;padding:12px;border-radius:10px
 
 <div class="box" id="panel" style="display:none">
   <h2>🌸 Lingbit Yönetim</h2>
-  <input type="password" id="token" placeholder="GitHub Token (ghp_...)">
+  <input type="password" id="token" placeholder="GitHub Token (ghp_... veya github_pat_...)">
   
   <div class="tabs">
     <button class="tab aktif" id="b1" onclick="sekme('s1',this)">✍️ Yazı Ekle/Düzenle</button>
@@ -68,8 +68,14 @@ button{background:#F4C2C2;color:#FFF;border:none;padding:12px;border-radius:10px
 </div>
 
 <script>
-const API_URL = "https://github.com";
-const RAW_URL = "https://githubusercontent.com";
+// 👇 BURAYI KENDİ BİLGİLERİNLE DOLDUR 👇
+const GITHUB_KULLANICI = "Lingbit"; 
+const GITHUB_DEPO = "benim-blogum"; 
+const DAL = "main"; // Eğer deponun ana dalı 'master' ise burayı 'master' yap
+// 👆 ------------------------------ 👆
+
+const API_URL = `https://github.com{GITHUB_KULLANICI}/${GITHUB_DEPO}/contents/`;
+const RAW_URL = `https://githubusercontent.com{GITHUB_KULLANICI}/${GITHUB_DEPO}/${DAL}/`;
 const SIFRE = "1234";
 
 let duzenleYol = null, duzenleSha = null, eskiKapak = "", yazilar = [];
@@ -107,20 +113,25 @@ async function apiPut(yol, icerikB64, msj, sha=null) {
   localStorage.setItem("tk", tk);
   const body = { message: msj, content: icerikB64 };
   if(sha) body.sha = sha;
-  const hedefUrl = "https://github.com" + yol;
+  
+  const hedefUrl = API_URL + yol;
   const res = await fetch(hedefUrl, {
     method: "PUT",
-    headers: { "Authorization": "token " + tk, "Content-Type": "application/json" },
+    headers: { 
+      "Authorization": "Bearer " + tk, 
+      "Content-Type": "application/json" 
+    },
     body: JSON.stringify(body)
   });
   const veri = await res.json();
-  if(!res.ok) throw new Error("GitHub Yanıtı (" + res.status + "): " + veri.message + " | Adres: " + hedefUrl);
+  if(!res.ok) throw new Error("GitHub Yanıtı (" + res.status + "): " + veri.message);
+  return veri;
 }
-  }
 
 async function ayarGetir() {
   try {
     const r = await fetch(RAW_URL + "ayarlar.json?t=" + Date.now());
+    if(!r.ok) return;
     const d = await r.json();
     document.getElementById("aBaslik").value = d.siteBaslik || "";
     document.getElementById("aAlt").value = d.altBaslik || "";
@@ -131,30 +142,45 @@ async function ayarGetir() {
 async function ayarKaydet() {
   const m = document.getElementById("mesaj"); m.innerText = "⏳ Kaydediliyor...";
   try {
-    const g = await (await fetch(API_URL + "ayarlar.json?t=" + Date.now())).json();
-    const veri = { siteBaslik: document.getElementById("aBaslik").value, altBaslik: document.getElementById("aAlt").value, hakkimda: document.getElementById("aHakkimda").value };
-    await apiPut("ayarlar.json", btoa(unescape(encodeURIComponent(JSON.stringify(veri,null,2)))), "Ayarlar", g.sha);
+    let sha = null;
+    const kontrol = await fetch(API_URL + "ayarlar.json?t=" + Date.now());
+    if(kontrol.ok) {
+      const g = await kontrol.json();
+      sha = g.sha;
+    }
+    const veri = { 
+      siteBaslik: document.getElementById("aBaslik").value, 
+      altBaslik: document.getElementById("aAlt").value, 
+      hakkimda: document.getElementById("aHakkimda").value 
+    };
+    await apiPut("ayarlar.json", btoa(unescape(encodeURIComponent(JSON.stringify(veri,null,2)))), "Ayarlar güncellendi", sha);
     m.innerText = "✅ Ana sayfa güncellendi!";
   } catch(e) { m.innerText = "❌ " + e.message; }
 }
 
 async function listeGetir() {
   const l = document.getElementById("liste"); l.innerHTML = "Yükleniyor...";
-  const dosyalar = await (await fetch(API_URL + "_posts?t=" + Date.now())).json();
-  l.innerHTML = ""; yazilar = [];
-  for(const d of dosyalar) {
-    if(d.name.endsWith(".json")) {
-      const y = await (await fetch(d.download_url + "?t=" + Date.now())).json();
-      const i = yazilar.push({...y, path: d.path, sha: d.sha}) - 1;
-      l.innerHTML += '<div class="satir"><span>' + y.baslik + '</span><div><button class="kucuk" style="background:#89CFF0" onclick="duzenle(' + i + ')">Düzenle</button><button class="kucuk" style="background:#F08080" onclick="sil(\'' + d.path + '\',\'' + d.sha + '\')">Sil</button></div></div>';
+  try {
+    const res = await fetch(API_URL + "_posts?t=" + Date.now());
+    if(!res.ok) { l.innerHTML = "Henüz yazı yok veya _posts klasörü oluşturulmamış."; return; }
+    const dosyalar = await res.json();
+    l.innerHTML = ""; yazilar = [];
+    for(const d of dosyalar) {
+      if(d.name.endsWith(".json")) {
+        const y = await (await fetch(d.download_url + "?t=" + Date.now())).json();
+        const i = yazilar.push({...y, path: d.path, sha: d.sha}) - 1;
+        l.innerHTML += '<div class="satir"><span>' + y.baslik + '</span><div><button class="kucuk" style="background:#89CFF0" onclick="duzenle(' + i + ')">Düzenle</button><button class="kucuk" style="background:#F08080" onclick="sil(\'' + d.path + '\',\'' + d.sha + '\')">Sil</button></div></div>';
+      }
     }
-  }
+  } catch(e) { l.innerHTML = "Yazılar yüklenirken hata oluştu."; }
 }
 
 function duzenle(i) {
   const y = yazilar[i]; duzenleYol = y.path; duzenleSha = y.sha; eskiKapak = y.resim || "";
-  document.getElementById("baslik").value = y.baslik; document.getElementById("kategori").value = y.kategori;
-  document.getElementById("ozet").value = y.ozet; document.getElementById("icerik").value = y.icerik;
+  document.getElementById("baslik").value = y.baslik; 
+  document.getElementById("kategori").value = y.kategori;
+  document.getElementById("ozet").value = y.ozet; 
+  document.getElementById("icerik").value = y.icerik;
   document.getElementById("kaydetBtn").innerText = "💾 Değişiklikleri Kaydet";
   document.getElementById("iptalBtn").style.display = "block";
   sekme("s1", document.getElementById("b1"));
@@ -163,6 +189,7 @@ function duzenle(i) {
 function sifirla() {
   duzenleYol = null; duzenleSha = null; eskiKapak = "";
   ["baslik","ozet","icerik"].forEach(id => document.getElementById(id).value = "");
+  document.getElementById("kapak").value = "";
   document.getElementById("kaydetBtn").innerText = "✨ Yayınla";
   document.getElementById("iptalBtn").style.display = "none";
 }
@@ -171,7 +198,9 @@ async function sil(yol, sha) {
   const tk = document.getElementById("token").value.trim();
   if(!tk || !confirm("Silinsin mi?")) return;
   await fetch(API_URL + yol, {
-    method: "DELETE", headers: { "Authorization": "Bearer " + tk, "Content-Type": "application/json" }, body: JSON.stringify({ message: "Sil", sha })
+    method: "DELETE", 
+    headers: { "Authorization": "Bearer " + tk, "Content-Type": "application/json" }, 
+    body: JSON.stringify({ message: "Yazı silindi", sha })
   });
   listeGetir();
 }
@@ -184,30 +213,25 @@ async function resimEkle() {
   try {
     const ad = "images/" + Date.now() + "-" + f.name.replace(/[^a-zA-Z0-9.]/g,'-');
     const b64Veri = await dosyaOku(f);
-    await apiPut(ad, b64Veri, "Resim");
-    document.getElementById("icerik").value += "\n\n![Görsel](" + RAW_URL + ad + ")\n\n";
-    m.innerText = "✅ Fotoğraf eklendi!";
+    await apiPut(ad, b64Veri, "Metin içi resim eklendi");
+    const resimUrl = RAW_URL + ad;
+    document.getElementById("icerik").value += `\n<img src="${resimUrl}" style="max-width:100%;border-radius:8px;margin:10px 0">\n`;
+    m.innerText = "✅ Fotoğraf metne eklendi!";
   } catch(e) { m.innerText = "❌ " + e.message; }
 }
 
 async function kaydet() {
-  const m = document.getElementById("mesaj"); m.innerText = "⏳ Kaydediliyor...";
+  const baslik = document.getElementById("baslik").value.trim();
+  const kategori = document.getElementById("kategori").value;
+  const ozet = document.getElementById("ozet").value.trim();
+  const icerik = document.getElementById("icerik").value.trim();
+  const m = document.getElementById("mesaj");
+
+  if(!baslik || !icerik) { alert("Başlık ve içerik boş bırakılamaz!"); return; }
+  m.innerText = "⏳ Yayınlanıyor...";
+
   try {
-    let kapakUrl = eskiKapak;
-    const dosyalar = document.getElementById("kapak").files;
-    if(dosyalar && dosyalar.length > 0) {
-      const f = dosyalar.item(0);
-      const ad = "images/" + Date.now() + "-" + f.name.replace(/[^a-zA-Z0-9.]/g,'-');
-      const b64Veri = await dosyaOku(f);
-      await apiPut(ad, b64Veri, "Kapak");
-      kapakUrl = RAW_URL + ad;
-    }
-    const veri = { baslik: document.getElementById("baslik").value, kategori: document.getElementById("kategori").value, resim: kapakUrl, ozet: document.getElementById("ozet").value, icerik: document.getElementById("icerik").value };
-    const yol = duzenleYol || ("_posts/" + Date.now() + ".json");
-    await apiPut(yol, btoa(unescape(encodeURIComponent(JSON.stringify(veri,null,2)))), "Yazı", duzenleSha);
-    m.innerText = "🎉 Başarıyla kaydedildi!"; sifirla();
-  } catch(e) { m.innerText = "❌ " + e.message; }
-}
-</script>
-</body>
-</html>
+    let resimUrl = eskiKapak;
+    const kapakDosya = document.getElementById("kapak").files[0];
+    if(kapakDosya) {
+      const kapakAd = "images/" + Date.now() + "-" + kapakDosya.name.replace(/[^a-zA-Z0-9.]/g,'-');
